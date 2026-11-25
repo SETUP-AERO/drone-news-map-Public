@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>World Drone News Map</title>
+<meta name="description" content="Live drone news, drone companies and research institutes worldwide, on one map.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%232a3947'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%23f59e0b'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="app" id="app">
+  <header>
+    <div class="brand"><h1 data-t="title">World Drone News Map</h1><span class="sub" data-t="sub"></span></div>
+    <div class="status" id="status" hidden><span class="dot" id="dot"></span><span id="statusText"></span></div>
+    <div class="hbtns">
+      <button class="pill" id="membersBtn" type="button" hidden></button>
+      <button class="pill" id="langBtn" type="button"></button>
+      <button class="pill" id="signOutBtn" type="button" hidden data-t="signOut"></button>
+    </div>
+  </header>
+
+  <!-- Signed-out: sign in / sign up -->
+  <section class="auth" id="authView" hidden>
+    <div class="authcopy">
+      <h2 data-t="authHead"></h2>
+      <p data-t="authBody"></p>
+      <ul class="facts">
+        <li data-t="fact1"></li><li data-t="fact2"></li><li data-t="fact3"></li>
+      </ul>
+    </div>
+    <form class="box" id="authForm" novalidate>
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" id="tabIn" aria-selected="true" data-t="signIn"></button>
+        <button type="button" role="tab" id="tabUp" aria-selected="false" data-t="signUp"></button>
+      </div>
+      <label><span data-t="email"></span><input id="aEmail" type="email" autocomplete="email" required></label>
+      <label><span data-t="password"></span><input id="aPass" type="password" autocomplete="current-password" minlength="8" required></label>
+      <p class="msg" id="aMsg" hidden></p>
+      <button class="btn" id="aSubmit" type="submit"></button>
+      <button class="link" id="aReset" type="button" data-t="forgot"></button>
+      <div class="or" id="googleWrap" hidden><span data-t="or"></span><button class="btn ghost" id="aGoogle" type="button" data-t="google"></button></div>
+    </form>
+  </section>
+
+  <!-- Signed-in, no profile yet -->
+  <section class="auth" id="joinView" hidden>
+    <form class="box wide" id="joinForm" novalidate>
+      <h2 data-t="gTitle"></h2>
+      <p class="muted" data-t="gIntro"></p>
+      <label><span data-t="lName"></span><input id="fName" required maxlength="80" autocomplete="name"></label>
+      <label><span data-t="lOrg"></span><input id="fOrg" required maxlength="120" autocomplete="organization"></label>
+      <label><span data-t="lRole"></span><select id="fRole" required></select></label>
+      <label><span data-t="lCountry"></span><input id="fCountry" maxlength="60" autocomplete="country-name"></label>
+      <label><span data-t="lPurpose"></span><textarea id="fPurpose" rows="2" maxlength="300"></textarea></label>
+      <label class="check"><input type="checkbox" id="fConsent" required><span data-t="lConsent"></span></label>
+      <p class="msg" id="jMsg" hidden></p>
+      <button class="btn" id="jSubmit" type="submit" data-t="gSubmit"></button>
+    </form>
+  </section>
+
+  <!-- Member view -->
+  <section class="mapapp" id="mapView" hidden>
+    <div class="controls">
+      <div class="seg" role="group" id="segRange">
+        <button data-range="1" aria-pressed="false" data-t="r1"></button>
+        <button data-range="7" aria-pressed="false" data-t="r7"></button>
+        <button data-range="30" aria-pressed="true" data-t="r30"></button>
+      </div>
+      <div class="chips" id="cats" role="group"></div>
+      <div class="chips" id="kinds" role="group"></div>
+    </div>
+    <div class="main">
+      <div class="mapwrap"><div id="map"></div><div class="legend" id="legend"></div></div>
+      <section class="feed" id="feed">
+        <div class="feedhead"><h2 id="feedTitle"></h2><span class="count" id="count"></span><button class="link" id="clearPlace" hidden data-t="all"></button></div>
+        <div class="list" id="list"></div>
+      </section>
+    </div>
+  </section>
+
+  <p class="boot" id="bootMsg"></p>
+</div>
+
+<div class="modal" id="mPanel" hidden>
+  <div class="box xwide"><div class="row"><h2 id="mTitle"></h2><button class="pill" id="mClose" type="button" data-t="mClose"></button></div>
+  <div class="mwrap"><table class="mtable"><thead><tr id="mHead"></tr></thead><tbody id="mBody"></tbody></table></div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/i18n.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

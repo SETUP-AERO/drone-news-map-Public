@@ -1,0 +1,4 @@
+.env
+*.local.js
+__pycache__/
+out/
