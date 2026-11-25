@@ -3,6 +3,6 @@
 // Never put the service_role key here.
 window.DNM_CONFIG = {
   supabaseUrl: "https://jbaavtjvwvskjqricgqw.supabase.co",
-  supabaseAnonKey: "",  // Project Settings > API > anon public key
+  supabaseAnonKey: "sb_publishable_dpjKFybbjqKPe7sfpo9hJQ_dPTVsvZp",  // Project Settings > API Keys > publishable key (sb_publishable_...)
   googleLogin: false    // set true after enabling Google in Supabase Auth > Providers
 };
