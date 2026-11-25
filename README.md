@@ -27,7 +27,7 @@
    *service_role* 키는 절대 이 파일이나 채팅에 넣지 마세요.
 4. **Authentication > URL Configuration**
    - *Site URL*: 사이트 주소 (예: `https://<도메인>.tech`)
-   - *Redirect URLs*: 같은 주소와 `https://0927lee.github.io/drone-news-map-Public/`
+   - *Redirect URLs*: 같은 주소와 `https://setup-aero.github.io/drone-news-map-Public/`
 5. (선택) Google 로그인: **Authentication > Providers > Google**을 켜고 `assets/config.js`의 `googleLogin`을 `true`로 바꿉니다.
 
 ### 2. 운영자 권한
@@ -47,7 +47,7 @@ where id = (select id from auth.users where email = '운영자 이메일');
 1. 도메인 업체의 DNS 설정에 다음을 추가합니다.
    - `A` 레코드 4개 (호스트 `@`): `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153`
    - `AAAA` 레코드 4개 (호스트 `@`): `2606:50c0:8000::153`, `2606:50c0:8001::153`, `2606:50c0:8002::153`, `2606:50c0:8003::153`
-   - `CNAME` 레코드 (호스트 `www`): `0927lee.github.io`
+   - `CNAME` 레코드 (호스트 `www`): `setup-aero.github.io`
 2. 저장소 **Settings > Pages > Custom domain**에 도메인을 입력하고, 확인되면 *Enforce HTTPS*를 켭니다.
 3. Supabase의 Site URL과 Redirect URLs에 새 도메인을 추가합니다.
 
