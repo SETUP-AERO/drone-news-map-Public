@@ -63,3 +63,14 @@ python3 -I scripts/push_supabase.py news news.json
 
 국내 기업 정보는 드론정보포털에 공개된 기업 정보만 쓰며, 대표자·연락처·이메일·상세 주소는 저장하지 않습니다.
 위치는 시군구 중심 좌표입니다.
+
+## 인스타그램 자동 게시
+
+`.github/workflows/instagram.yml`이 월·수·금·토 저녁 7시(한국시간)에 `instagram/queue/<날짜>/` 폴더의 게시물을 SETUP AERO 인스타에 올립니다.
+
+- 게시물 폴더: `instagram/queue/YYYY-MM-DD/` 안에 `1.jpg`(JPEG, 1080x1350), 여러 장이면 `2.jpg`… (캐러셀, 최대 10장), 그리고 `caption.txt`.
+- 비밀값: `IG_ACCESS_TOKEN` (Meta 개발자 앱 › Instagram 로그인을 통한 API 설정에서 만든 토큰). 채팅에 붙여넣지 말고 저장소 Settings › Secrets › Actions에만 넣습니다.
+- 실제 게시 켜기: 저장소 Settings › Secrets and variables › Actions › **Variables**에 `IG_LIVE` = `true`. 없으면 예약 실행은 연습(dry run)만 합니다.
+- 수동 실행: Actions › Instagram auto-post › Run workflow (날짜와 live 선택).
+- 게시가 끝나면 `instagram/posted.json`에 기록되어 같은 날 두 번 올라가지 않습니다.
+- 토큰은 SETUP AERO 비즈니스 포트폴리오의 시스템 사용자 토큰이라 만료되지 않습니다. 인스타 계정 ID는 워크플로의 `IG_USER_ID`에 있습니다.

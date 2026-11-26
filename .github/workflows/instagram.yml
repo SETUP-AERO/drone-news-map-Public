@@ -1,0 +1,45 @@
+name: Instagram auto-post
+
+# Mon/Wed/Fri/Sat 19:07 KST (10:07 UTC). Posts instagram/queue/<today KST>/ if present.
+on:
+  schedule:
+    - cron: "7 10 * * 1,3,5,6"
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Post date folder (YYYY-MM-DD). Empty = today in KST"
+        required: false
+      live:
+        description: "Really publish (otherwise dry run)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: instagram-post
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish
+        env:
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          # Scheduled runs publish only when repo variable IG_LIVE is "true".
+          IG_LIVE: ${{ github.event_name == 'workflow_dispatch' && inputs.live && 'true' || (github.event_name == 'schedule' && vars.IG_LIVE || 'false') }}
+          POST_DATE: ${{ inputs.date }}
+          IG_USER_ID: "17841427704312989"  # @setup_aero (not secret)
+        run: python3 scripts/ig_post.py
+      - name: Record posted
+        run: |
+          if [ -n "$(git status --porcelain instagram/posted.json)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add instagram/posted.json
+            git commit -m "Record Instagram post"
+            git push
+          fi
