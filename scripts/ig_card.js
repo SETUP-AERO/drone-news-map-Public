@@ -56,7 +56,7 @@ function html(spec) {
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=block" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0}
-body{width:1080px;height:1350px;background:#0c141c;color:#e6edf3;font-family:'IBM Plex Sans KR',sans-serif;padding:70px 64px 56px;display:flex;flex-direction:column;--c:${s.color}}
+body{word-break:keep-all;width:1080px;height:1350px;background:#0c141c;color:#e6edf3;font-family:'IBM Plex Sans KR',sans-serif;padding:70px 64px 56px;display:flex;flex-direction:column;--c:${s.color}}
 em{font-style:normal;color:var(--c)}
 .top{display:flex;justify-content:space-between;font:600 21px 'IBM Plex Mono',monospace;letter-spacing:1px}
 .top span:last-child{color:#8b98a5;font-weight:500}
