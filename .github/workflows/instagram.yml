@@ -32,6 +32,7 @@ jobs:
           # Scheduled runs publish only when repo variable IG_LIVE is "true".
           IG_LIVE: ${{ github.event_name == 'workflow_dispatch' && inputs.live && 'true' || (github.event_name == 'schedule' && vars.IG_LIVE || 'false') }}
           POST_DATE: ${{ inputs.date }}
+          IG_USER_ID: "17841427704312989"  # @setup_aero (not secret)
         run: python3 scripts/ig_post.py
       - name: Record posted
         run: |
@@ -41,21 +42,4 @@ jobs:
             git add instagram/posted.json
             git commit -m "Record Instagram post"
             git push
-          fi
-      - name: Refresh token (optional)
-        # Instagram tokens last 60 days. If secret IG_SECRET_PAT (a fine-grained token with
-        # "Secrets: write" on this repo) is set, renew IG_ACCESS_TOKEN on every run.
-        env:
-          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
-          GH_TOKEN: ${{ secrets.IG_SECRET_PAT }}
-        run: |
-          if [ -z "$GH_TOKEN" ] || [ -z "$IG_ACCESS_TOKEN" ]; then echo "No IG_SECRET_PAT; skipping refresh."; exit 0; fi
-          new=$(curl -s "https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=$IG_ACCESS_TOKEN" \
-            | python3 -c 'import sys,json; print(json.load(sys.stdin).get("access_token",""))')
-          if [ -n "$new" ]; then
-            echo "::add-mask::$new"
-            gh secret set IG_ACCESS_TOKEN --body "$new" --repo "$GITHUB_REPOSITORY"
-            echo "Token refreshed (valid 60 more days)."
-          else
-            echo "::warning::Token refresh failed. Make a new token in the Meta app if posts start failing."
           fi

@@ -7,7 +7,10 @@ Queue layout (one folder per post, named by Korea date):
         caption.txt         post caption (UTF-8)
 
 Environment:
-    IG_ACCESS_TOKEN   long-lived Instagram user access token (GitHub secret)
+    IG_ACCESS_TOKEN   access token (GitHub secret). Either a Meta business system-user
+                      token (never expires; used with IG_USER_ID on graph.facebook.com) or an
+                      Instagram-Login user token (graph.instagram.com, no IG_USER_ID needed)
+    IG_USER_ID        Instagram business account id (e.g. 17841427704312989)
     IG_LIVE           "true" to really publish; anything else = dry run
     POST_DATE         optional YYYY-MM-DD override (default: today in Asia/Seoul)
     IMAGE_BASE_URL    public base URL where the repo files are served
@@ -28,6 +31,7 @@ import urllib.parse
 import urllib.request
 
 API = "https://graph.instagram.com/v23.0"
+FB_API = "https://graph.facebook.com/v23.0"
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 QUEUE = ROOT / "instagram" / "queue"
 POSTED = ROOT / "instagram" / "posted.json"
@@ -36,8 +40,9 @@ KST = dt.timezone(dt.timedelta(hours=9))
 
 def call(method, path, token, **params):
     params["access_token"] = token
+    api = FB_API if os.environ.get("IG_USER_ID") else API
     data = urllib.parse.urlencode(params).encode()
-    url = path if path.startswith("http") else f"{API}/{path}"
+    url = path if path.startswith("http") else f"{api}/{path}"
     if method == "GET":
         req = urllib.request.Request(f"{url}?{data.decode()}")
     else:
@@ -101,8 +106,12 @@ def main():
         print("Dry run without token: checked the queue only.")
         return
 
-    me = call("GET", "me", token, fields="user_id,username")
-    ig_id = me["user_id"]
+    ig_id = os.environ.get("IG_USER_ID")
+    if ig_id:
+        me = call("GET", ig_id, token, fields="username")
+    else:
+        me = call("GET", "me", token, fields="user_id,username")
+        ig_id = me["user_id"]
     print(f"Account: @{me.get('username')} ({ig_id})")
 
     if not live:

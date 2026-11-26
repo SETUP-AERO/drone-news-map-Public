@@ -73,4 +73,4 @@ python3 -I scripts/push_supabase.py news news.json
 - 실제 게시 켜기: 저장소 Settings › Secrets and variables › Actions › **Variables**에 `IG_LIVE` = `true`. 없으면 예약 실행은 연습(dry run)만 합니다.
 - 수동 실행: Actions › Instagram auto-post › Run workflow (날짜와 live 선택).
 - 게시가 끝나면 `instagram/posted.json`에 기록되어 같은 날 두 번 올라가지 않습니다.
-- 토큰은 60일 동안 유효합니다. 자동 갱신하려면 이 저장소에 *Secrets: write* 권한만 준 fine-grained 토큰을 `IG_SECRET_PAT` 비밀값으로 추가하세요.
+- 토큰은 SETUP AERO 비즈니스 포트폴리오의 시스템 사용자 토큰이라 만료되지 않습니다. 인스타 계정 ID는 워크플로의 `IG_USER_ID`에 있습니다.
