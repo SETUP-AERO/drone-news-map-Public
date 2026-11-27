@@ -1,5 +1,6 @@
-/* World Drone News Map: sign-in, member profile, and the live map.
-   Data is read from Supabase; row-level security only lets members with a profile read it. */
+/* World Drone News Map: guest preview, sign-in, member profile, and the live map.
+   Data is read from Supabase; row-level security only lets members with a profile read it.
+   Guests get a small preview from the preview_data() function (supabase/preview.sql). */
 (() => {
 const CFG = window.DNM_CONFIG || {};
 const $ = id => document.getElementById(id);
@@ -17,12 +18,13 @@ const coField = (c, f) => c.kind === "portal" ? trList(c[f]) : L(c, f);
 const coPlace = c => c.kind === "portal" ? `${krPlace(c.place)}, ${country("대한민국")}` : [c.place, country(c.country)].filter(Boolean).join(", ");
 const placeKey = n => `${(+n.lat).toFixed(1)},${(+n.lon).toFixed(1)}`;
 const redirectTo = location.origin + location.pathname;
-let map = null, started = false, popup = null, authMode = "in";
+let map = null, popup = null, authMode = "in", loadedAs = null, subscribed = false;
 
 const state = {
   news: [], companies: [], regions: [], krTotals: null, updatedAt: null,
   range: 30, cats: new Set(Object.keys(CATS)), kinds: new Set(Object.keys(KINDS)),
-  place: null, sel: null, company: null, members: null, profile: null
+  place: null, sel: null, company: null, members: null, profile: null,
+  guest: false, region: null, preview: { newsTotal: 0, portalTotal: 0, off: false }
 };
 
 /* ---------- Shapes for organization types (drawn once, used on the map and in the legend) ---------- */
@@ -62,18 +64,29 @@ function applyLang() {
   for (const k of Object.keys(KINDS)) { const b = $("kind-" + k); if (b) b.innerHTML = `${shapeSvg(k)}${esc(kindLabel(k))}`; }
   $("legend").innerHTML = `<span><svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="var(--accent)"/></svg>${esc(T("legendNews"))}</span>`
     + Object.keys(KINDS).map(k => `<span>${shapeSvg(k)}${esc(kindLabel(k))}</span>`).join("") + `<span>${esc(T("legendHint"))}</span>`;
-  renderMembers();
+  renderMembers(); renderGate();
   if (map) { refreshMapText(); render(); }
   if (state.news.length) statusLine();
 }
 $("langBtn").onclick = () => { LANG = LANG === "en" ? "ko" : "en"; try { localStorage.setItem("lang", LANG); } catch (e) {} applyLang(); };
 
 /* ---------- Views ---------- */
+// "guest" shows the map preview; sign-in then opens as a dialog over it.
 function show(view) {
-  for (const v of ["authView", "joinView", "mapView"]) $(v).hidden = v !== view;
+  const guest = view === "guest";
+  state.guest = guest;
+  $("app").classList.toggle("guest", guest);
+  $("mapView").hidden = !(guest || view === "mapView");
+  $("joinView").hidden = view !== "joinView";
+  $("authView").hidden = view !== "authView";
+  for (const id of ["signInBtn", "joinBtn", "gateBar", "lockNote", "authClose"]) $(id).hidden = !guest;
   $("bootMsg").hidden = true;
-  $("signOutBtn").hidden = view === "authView";
-  $("status").hidden = view !== "mapView";
+  $("signOutBtn").hidden = guest || view === "authView";
+  $("status").hidden = $("mapView").hidden;
+}
+function renderGate() {
+  if (!state.guest) return;
+  $("gateText").textContent = state.preview.off ? T("previewSoon") : STR[LANG].gate(state.news.length, Math.max(state.preview.newsTotal, state.news.length));
 }
 function msg(el, text, ok) { el.textContent = text || ""; el.hidden = !text; el.classList.toggle("ok", !!ok); }
 
@@ -92,6 +105,12 @@ function setMode(m) {
   $("aSubmit").textContent = m === "up" ? T("signUp") : m === "reset" ? T("newPass") : T("signIn");
   msg($("aMsg"), "");
 }
+function openAuth(mode) { setMode(mode); $("authView").hidden = false; $("aEmail").focus(); }
+function closeAuth() { if (state.guest) $("authView").hidden = true; }
+$("signInBtn").onclick = () => openAuth("in");
+$("joinBtn").onclick = $("gateBtn").onclick = $("lockNote").onclick = () => openAuth("up");
+$("authClose").onclick = closeAuth;
+$("authView").onclick = e => { if (e.target === $("authView")) closeAuth(); };
 $("tabIn").onclick = () => setMode("in");
 $("tabUp").onclick = () => setMode("up");
 $("googleWrap").hidden = !CFG.googleLogin;
@@ -146,9 +165,9 @@ async function route() {
   if (routing) return routing;
   routing = (async () => {
     const { data: { session } } = await sb.auth.getSession();
-    if (!session) { show("authView"); return; }
+    if (!session) { show("guest"); startApp(); return; }
     const { data: prof, error } = await sb.from("profiles").select("*").eq("id", session.user.id).maybeSingle();
-    if (error) { show("authView"); msg($("aMsg"), T("loadFail")); return; }
+    if (error) { show("guest"); startApp(); openAuth("in"); msg($("aMsg"), T("loadFail")); return; }
     if (!prof) { show("joinView"); return; }
     state.profile = prof;
     show("mapView");
@@ -176,20 +195,21 @@ async function loadMembers() {
 $("membersBtn").onclick = () => { loadMembers(); $("mPanel").hidden = false; };
 $("mClose").onclick = () => { $("mPanel").hidden = true; };
 $("mPanel").onclick = e => { if (e.target === $("mPanel")) $("mPanel").hidden = true; };
-document.addEventListener("keydown", e => { if (e.key === "Escape") $("mPanel").hidden = true; });
+document.addEventListener("keydown", e => { if (e.key === "Escape") { $("mPanel").hidden = true; closeAuth(); } });
 
 /* ---------- Filters ---------- */
 for (const k of Object.keys(CATS)) {
   const b = document.createElement("button"); b.className = "chip"; b.id = "cat-" + k; b.type = "button"; b.setAttribute("aria-pressed", "true");
-  b.onclick = () => { state.cats.has(k) ? state.cats.delete(k) : state.cats.add(k); b.setAttribute("aria-pressed", state.cats.has(k)); render(); };
+  b.onclick = () => { if (state.guest) return openAuth("up"); state.cats.has(k) ? state.cats.delete(k) : state.cats.add(k); b.setAttribute("aria-pressed", state.cats.has(k)); render(); };
   $("cats").appendChild(b);
 }
 for (const k of Object.keys(KINDS)) {
   const b = document.createElement("button"); b.className = "chip"; b.id = "kind-" + k; b.type = "button"; b.setAttribute("aria-pressed", "true");
-  b.onclick = () => { state.kinds.has(k) ? state.kinds.delete(k) : state.kinds.add(k); b.setAttribute("aria-pressed", state.kinds.has(k)); render(); };
+  b.onclick = () => { if (state.guest) return openAuth("up"); state.kinds.has(k) ? state.kinds.delete(k) : state.kinds.add(k); b.setAttribute("aria-pressed", state.kinds.has(k)); render(); };
   $("kinds").appendChild(b);
 }
 document.querySelectorAll("#segRange button").forEach(b => b.onclick = () => {
+  if (state.guest) return openAuth("up");
   state.range = +b.dataset.range;
   document.querySelectorAll("#segRange button").forEach(x => x.setAttribute("aria-pressed", x === b)); render();
 });
@@ -239,7 +259,7 @@ function geo(features) { return { type: "FeatureCollection", features }; }
 const pt = (lon, lat, props) => ({ type: "Feature", geometry: { type: "Point", coordinates: [+lon, +lat] }, properties: props });
 
 function filteredNews() {
-  return state.news.filter(n => state.cats.has(n.category) && ageH(n.published) <= state.range * 24 + 12)
+  return state.news.filter(n => state.cats.has(n.category) && (state.guest || ageH(n.published) <= state.range * 24 + 12))
     .sort((a, b) => new Date(b.published) - new Date(a.published));
 }
 const catColorExpr = () => ["match", ["get", "cat"], ...Object.entries(CATS).flatMap(([k, c]) => [k, css(c.v)]), css("--c-biz")];
@@ -327,9 +347,28 @@ function companyCard(c) {
   <dl>${rows.map(r => `<dt>${esc(r[0])}</dt><dd>${esc(r[1])}</dd>`).join("")}</dl>${u ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(T("website"))}</a>` : ""}</div>`;
 }
 
+// Guests see a short card with a sign-up button instead of the details.
+function lockedCard(kicker, title, sub, body) {
+  return `<div class="cocard"><div class="meta"><span>${esc(kicker)}</span><button id="closeCo" class="x" type="button" aria-label="${esc(T("closeAria"))}">${esc(T("close"))}</button></div>
+  <h3>${esc(title)}${sub ? ` <span class="ko">${esc(sub)}</span>` : ""}</h3><p>${esc(body)}</p>
+  <button class="btn small" type="button" data-join>${esc(T("joinFree"))}</button></div>`;
+}
+function guestCompanyCard(c) {
+  const sub = LANG === "ko" && c.name_ko && c.name_ko !== c.name ? c.name_ko : "";
+  return lockedCard(kindLabel(kindOf(c)), c.name, sub, `${coPlace(c)}. ${T("coLocked")}`);
+}
+function guestRegionCard(r) {
+  return lockedCard(T("portalCard"), regionName(r.name), "", `${STR[LANG].regionTip("", num(r.total), num(r.make), num(r.use)).replace(/<br>/g, " · ").replace(/<[^>]+>/g, "").trim()}. ${T("regLocked")}`);
+}
+function upsell(shown) {
+  const more = Math.max(0, state.preview.newsTotal - shown), kr = state.preview.portalTotal;
+  return `<div class="upsell"><h3>${esc(STR[LANG].moreHead(more))}</h3><p>${esc(T("moreBody"))}${kr ? " " + esc(STR[LANG].moreBodyKr(num(kr))) : ""}</p>
+  <button class="btn small" type="button" data-join>${esc(T("joinFree"))}</button></div>`;
+}
 function renderList(items) {
   const co = state.company && state.companies.find(c => c.id === state.company);
-  const coHtml = co ? companyCard(co) : "";
+  const reg = state.guest && state.region && state.regions.find(r => r.name === state.region);
+  const coHtml = co ? (state.guest ? guestCompanyCard(co) : companyCard(co)) : reg ? guestRegionCard(reg) : "";
   const list = state.place ? items.filter(n => placeKey(n) === state.place) : items;
   $("feedTitle").textContent = state.place ? STR[LANG].placeNews(list[0]?.place || T("selPlace")) : T("latest");
   $("clearPlace").hidden = !state.place;
@@ -341,13 +380,15 @@ function renderList(items) {
       <div style="min-width:0">
         <div class="meta"><span>${esc(fmtDate(n.published))}</span><span>${esc([n.place, LANG === "en" ? (n.country_en || country(n.country)) : n.country].filter(Boolean).join(", "))}</span>${ageH(n.published) < 24 ? '<span class="new">NEW</span>' : ""}</div>
         <h3>${esc(t)}</h3>${n.title && t !== n.title ? `<p class="orig">${esc(n.title)}</p>` : ""}
-        <div class="foot"><span class="tag" style="color:var(${c.v})">${esc(c[LANG])}</span><span>${esc(n.source)}</span>${u ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(T("readMore"))}</a>` : ""}</div>
+        <div class="foot"><span class="tag" style="color:var(${c.v})">${esc(c[LANG])}</span><span>${esc(n.source)}</span>${state.guest ? `<button class="link" type="button" data-join>${esc(T("readLocked"))}</button>` : u ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(T("readMore"))}</a>` : ""}</div>
       </div></article>`;
-  }).join("") : `<div class="empty">${esc(state.news.length ? T("noMatch") : T("noNews"))}</div>`);
-  if ($("closeCo")) $("closeCo").onclick = () => { state.company = null; render(); };
+  }).join("") : state.guest ? "" : `<div class="empty">${esc(state.news.length ? T("noMatch") : T("noNews"))}</div>`)
+    + (state.guest ? upsell(list.length) : "");
+  if ($("closeCo")) $("closeCo").onclick = () => { state.company = null; state.region = null; render(); };
+  $("list").querySelectorAll("[data-join]").forEach(b => b.onclick = e => { e.stopPropagation(); openAuth("up"); });
   $("list").querySelectorAll(".card").forEach(el => {
     const go = () => focusNews(el.dataset.id);
-    el.onclick = e => { if (!e.target.closest("a")) go(); };
+    el.onclick = e => { if (!e.target.closest("a,[data-join]")) go(); };
     el.onkeydown = e => { if (e.key === "Enter") go(); };
   });
 }
@@ -370,7 +411,7 @@ function wireEvents() {
   };
   hover("dnm-news", f => { const n = state.news.find(x => x.id === f.properties.id); return n && `<b>${esc(n.place || "")}</b><br>${esc(newsTitle(n))}`; });
   hover("dnm-news-c", f => `<b>${esc(STR[LANG].count(f.properties.point_count))}</b>`);
-  hover("dnm-cos", f => { const c = state.companies.find(x => x.id === f.properties.id); return c && `<b>${esc(c.name)}</b> <span style="color:var(--muted)">${esc(kindLabel(kindOf(c)))}</span><br>${esc(coField(c, "segment") || "")}<br><span style="color:var(--muted)">${esc(coPlace(c))}</span>`; });
+  hover("dnm-cos", f => { const c = state.companies.find(x => x.id === f.properties.id); const seg = c && coField(c, "segment"); return c && `<b>${esc(c.name)}</b> <span style="color:var(--muted)">${esc(kindLabel(kindOf(c)))}</span><br>${seg ? esc(seg) + "<br>" : ""}<span style="color:var(--muted)">${esc(coPlace(c))}</span>`; });
   hover("dnm-portal", f => { const c = state.companies.find(x => x.id === f.properties.id); return c && `<b>${esc(c.name)}</b><br>${esc(coField(c, "segment") || "")}<br><span style="color:var(--muted)">${esc(coPlace(c))}</span>`; });
   hover("dnm-portal-c", f => esc(STR[LANG].clusterTip(f.properties.point_count)));
   for (const id of ["dnm-reg", "dnm-reg-all"]) hover(id, f => { const p = f.properties; return STR[LANG].regionTip(esc(p.label), esc(num(p.total)), esc(num(p.make)), esc(num(p.use))) + `<br><span style="color:var(--muted)">${esc(T("statsSrc"))}${state.krTotals?.asOf ? " · " + esc(state.krTotals.asOf) : ""}</span>`; });
@@ -384,7 +425,7 @@ function wireEvents() {
     const z = await src.getClusterExpansionZoom(f.properties.cluster_id);
     map.easeTo({ center: f.geometry.coordinates, zoom: z + .3 });
   });
-  const openCo = e => { state.company = e.features[0].properties.id; state.place = null; render(); $("list").scrollTop = 0; };
+  const openCo = e => { state.company = e.features[0].properties.id; state.region = null; state.place = null; render(); $("list").scrollTop = 0; };
   map.on("click", "dnm-cos", openCo);
   map.on("click", "dnm-portal", openCo);
   map.on("click", "dnm-portal-c", async e => {
@@ -395,6 +436,7 @@ function wireEvents() {
   for (const id of ["dnm-reg", "dnm-reg-all"]) map.on("click", id, e => {
     const p = e.features[0].properties;
     if (p.all) map.flyTo({ center: [127.8, 36.2], zoom: 5.6 });
+    else if (state.guest) { state.region = p.name; state.company = null; state.place = null; render(); $("list").scrollTop = 0; }
     else map.flyTo({ center: e.features[0].geometry.coordinates, zoom: PORTAL_MIN + .9 });
   });
 }
@@ -428,7 +470,7 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
 function setStatus(on, text) { $("dot").classList.toggle("on", on); $("statusText").textContent = text; }
 function statusLine() {
   const t = state.updatedAt ? new Date(state.updatedAt).toLocaleString(locale(), { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
-  setStatus(true, STR[LANG].live(t, state.news.length));
+  setStatus(true, state.guest ? STR[LANG].preview(t) : STR[LANG].live(t, state.news.length));
 }
 const okPoint = r => isFinite(+r.lat) && isFinite(+r.lon) && r.lat !== null && r.lon !== null;
 async function fetchAll(table, cols, order) {
@@ -460,6 +502,19 @@ async function loadData() {
     statusLine(); render();
   } catch (e) { setStatus(false, T("loadFail")); }
 }
+async function loadPreview() {
+  setStatus(false, T("connecting"));
+  const { data, error } = await sb.rpc("preview_data");
+  if (!state.guest) return;
+  if (error || !data) { state.preview.off = true; setStatus(false, T("previewSoon")); renderGate(); render(); return; }
+  state.news = (data.news || []).filter(okPoint);
+  state.companies = (data.companies || []).filter(okPoint);
+  state.regions = (data.regions || []).filter(okPoint);
+  state.krTotals = data.kr_totals || null;
+  state.updatedAt = data.updated_at || null;
+  state.preview = { newsTotal: +data.news_total || 0, portalTotal: +data.portal_total || 0, off: false };
+  statusLine(); renderGate(); render();
+}
 function subscribe() {
   sb.channel("news-live").on("postgres_changes", { event: "*", schema: "public", table: "news" }, p => {
     if (p.eventType === "DELETE") state.news = state.news.filter(n => n.id !== p.old.id);
@@ -470,8 +525,14 @@ function subscribe() {
   setInterval(() => { if (!document.hidden) loadData(); }, 15 * 60 * 1000);
 }
 function startApp() {
-  if (started) return; started = true;
-  initMap(); loadData(); subscribe();
+  const as = state.guest ? "guest" : "member";
+  if (loadedAs === as) return;
+  loadedAs = as;
+  if (map) map.resize(); else initMap();
+  if (state.guest) { loadPreview(); return; }
+  state.region = null; state.company = null;
+  loadData();
+  if (!subscribed) { subscribed = true; subscribe(); }
   if (state.profile?.is_admin) loadMembers();
 }
 

@@ -19,20 +19,23 @@
     <div class="hbtns">
       <button class="pill" id="membersBtn" type="button" hidden></button>
       <button class="pill" id="langBtn" type="button"></button>
+      <button class="pill" id="signInBtn" type="button" hidden data-t="signIn"></button>
+      <button class="pill cta" id="joinBtn" type="button" hidden data-t="joinFree"></button>
       <button class="pill" id="signOutBtn" type="button" hidden data-t="signOut"></button>
     </div>
   </header>
 
-  <!-- Signed-out: sign in / sign up -->
-  <section class="auth" id="authView" hidden>
+  <!-- Sign in / sign up (a full page, or a dialog over the guest preview) -->
+  <section class="auth" id="authView" hidden aria-labelledby="authTitle">
     <div class="authcopy">
-      <h2 data-t="authHead"></h2>
+      <h2 id="authTitle" data-t="authHead"></h2>
       <p data-t="authBody"></p>
       <ul class="facts">
         <li data-t="fact1"></li><li data-t="fact2"></li><li data-t="fact3"></li>
       </ul>
     </div>
     <form class="box" id="authForm" novalidate>
+      <button class="link closeAuth" id="authClose" type="button" hidden data-t="backToMap"></button>
       <div class="tabs" role="tablist">
         <button type="button" role="tab" id="tabIn" aria-selected="true" data-t="signIn"></button>
         <button type="button" role="tab" id="tabUp" aria-selected="false" data-t="signUp"></button>
@@ -72,9 +75,10 @@
       </div>
       <div class="chips" id="cats" role="group"></div>
       <div class="chips" id="kinds" role="group"></div>
+      <button class="lock" id="lockNote" type="button" hidden data-t="lockNote"></button>
     </div>
     <div class="main">
-      <div class="mapwrap"><div id="map"></div><div class="legend" id="legend"></div></div>
+      <div class="mapwrap"><div id="map"></div><div class="gate" id="gateBar" hidden><span id="gateText"></span><button class="btn" id="gateBtn" type="button" data-t="joinFree"></button></div><div class="legend" id="legend"></div></div>
       <section class="feed" id="feed">
         <div class="feedhead"><h2 id="feedTitle"></h2><span class="count" id="count"></span><button class="link" id="clearPlace" hidden data-t="all"></button></div>
         <div class="list" id="list"></div>

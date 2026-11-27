@@ -5,6 +5,7 @@
 
 - 기본 언어는 영어이고 오른쪽 위 버튼으로 한국어로 바꿀 수 있습니다.
 - 가입 후 프로필(이름, 소속, 분야)을 등록한 회원만 데이터를 읽을 수 있습니다. 데이터베이스의 행 수준 보안(RLS)이 이를 강제합니다.
+- 가입하지 않은 방문자도 미리보기를 볼 수 있습니다: 지도, 최신 뉴스 10건 제목(원문 링크 없음), 기관 이름과 위치, 국내 권역별 통계. 기업 상세 정보, 전체 뉴스와 원문 링크, 필터, 국내 개별 기업은 회원 전용입니다. 미리보기 데이터는 `public.preview_data()` 함수 하나로만 나갑니다 (`supabase/preview.sql`).
 - 지도: MapLibre GL + OpenFreeMap 타일 (키 불필요, 무료).
 
 ## 폴더 구성
@@ -14,6 +15,7 @@
 | `index.html`, `assets/` | 사이트 화면 (로그인, 회원 정보 입력, 지도) |
 | `assets/config.js` | Supabase 프로젝트 URL과 공개(anon) 키 |
 | `supabase/schema.sql` | 테이블, 권한, 보안 정책 |
+| `supabase/preview.sql` | 비회원 미리보기용 함수 (schema.sql 끝에도 포함) |
 | `supabase/seed.sql` | 첫 버전 지도에서 옮겨 온 데이터 (뉴스, 해외 기업 60곳, 국내 드론기업 278곳, 권역 통계) |
 | `scripts/push_supabase.py` | 수집한 뉴스·국내 기업 데이터를 Supabase에 쓰는 스크립트 |
 | `scripts/update_kr.py` | 드론정보포털에서 국내 드론기업 목록과 권역별 통계를 받아 오는 스크립트 |
@@ -23,6 +25,7 @@
 ### 1. Supabase
 1. https://supabase.com 에서 새 프로젝트를 만듭니다 (무료 플랜으로 충분합니다).
 2. **SQL Editor**에서 `supabase/schema.sql` 전체를 붙여 넣고 실행한 다음, `supabase/seed.sql`도 같은 방법으로 실행합니다.
+   (이미 운영 중인 프로젝트에 미리보기만 추가할 때는 `supabase/preview.sql`만 실행하면 됩니다.)
 3. **Project Settings > API**에서 *Project URL*과 *anon public* 키를 `assets/config.js`에 넣습니다. anon 키는 공개용이라 저장소에 올려도 됩니다.
    *service_role* 키는 절대 이 파일이나 채팅에 넣지 마세요.
 4. **Authentication > URL Configuration**

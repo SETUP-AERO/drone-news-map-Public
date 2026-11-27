@@ -22,7 +22,7 @@ Object.assign(STR.en,{
   sub:"Drone news, companies and research institutes worldwide",
   signIn:"Sign in",signUp:"Create account",email:"Email",password:"Password (8+ characters)",forgot:"Forgot password?",or:"or",google:"Continue with Google",signOut:"Sign out",
   authHead:"Live drone news from around the world, on one map",
-  authBody:"Free for members. Create an account to see the map, the news feed and the company directory.",
+  authBody:"Membership is free. Create an account to see every story with its source, details for each company and research institute, and the filters.",
   fact1:"Drone news collected every hour, placed where it happened",
   fact2:"Global drone makers, startups, SMEs and research institutes",
   fact3:"Korean drone firms from the Drone Information Portal, by region",
@@ -37,13 +37,24 @@ Object.assign(STR.en,{
   loadFail:"Couldn't load the data. Refresh the page to try again.",
   gTitle:"One more step",gIntro:"Tell us a little about yourself to finish joining. Only the site owner can see these details.",
   gFail:"Couldn't save your details. Please try again.",
-  portalCard:"Drone Information Portal",clusterTip:n=>`${n} firms · click to zoom`
+  portalCard:"Drone Information Portal",clusterTip:n=>`${n} firms · click to zoom`,
+  joinFree:"Sign up free",backToMap:"← Back to the map",
+  preview:t=>`Preview · last update ${t}`,
+  gate:(k,n)=>`You're seeing a preview with the ${k} latest stories. Sign up free to see all ${n} stories from the last 30 days, every company's details and the filters.`,
+  lockNote:"🔒 Filters are for members",
+  readLocked:"Sign up to read ↗",
+  moreHead:n=>n>0?`${n} more stories for members`:"More for members",
+  moreBody:"Members see the full 30-day news feed with links to every article, details for each company and research institute, and the filters.",
+  moreBodyKr:n=>`Members can also zoom into Korea to see all ${n} firms from the Drone Information Portal.`,
+  coLocked:"Sign up free to see this organization's field, main products, founding year and website.",
+  regLocked:"Sign up free to zoom in and see each firm from the Drone Information Portal in this region.",
+  previewSoon:"The preview isn't switched on yet. Sign up free to see the map."
 });
 Object.assign(STR.ko,{
   sub:"전 세계 드론 뉴스, 기업, 연구기관을 지도 위에서",
   signIn:"로그인",signUp:"회원가입",email:"이메일",password:"비밀번호 (8자 이상)",forgot:"비밀번호를 잊으셨나요?",or:"또는",google:"Google로 계속하기",signOut:"로그아웃",
   authHead:"전 세계 드론 뉴스를 지도 한 장으로",
-  authBody:"회원은 무료로 이용할 수 있어요. 가입하면 지도, 뉴스 목록, 기업 정보를 볼 수 있어요.",
+  authBody:"회원가입은 무료예요. 가입하면 모든 뉴스와 원문 링크, 기업·연구기관 상세 정보, 필터를 이용할 수 있어요.",
   fact1:"매시간 수집한 드론 뉴스를 발생 위치에 표시",
   fact2:"해외 드론 제조사, 스타트업, 중소기업, 연구기관",
   fact3:"드론정보포털 등록 국내 드론기업을 권역별로",
@@ -58,5 +69,16 @@ Object.assign(STR.ko,{
   loadFail:"데이터를 불러오지 못했어요. 새로고침해 주세요.",
   gTitle:"마지막 단계예요",gIntro:"가입을 마치려면 간단한 정보를 입력해 주세요. 입력한 정보는 사이트 운영자만 볼 수 있어요.",
   gFail:"정보를 저장하지 못했어요. 다시 시도해 주세요.",
-  portalCard:"드론정보포털",clusterTip:n=>`${n}개사 · 눌러서 확대`
+  portalCard:"드론정보포털",clusterTip:n=>`${n}개사 · 눌러서 확대`,
+  joinFree:"무료 회원가입",backToMap:"← 지도로 돌아가기",
+  preview:t=>`미리보기 · 마지막 수집 ${t}`,
+  gate:(k,n)=>`지금은 최신 뉴스 ${k}건만 보이는 미리보기예요. 무료로 가입하면 최근 30일 뉴스 ${n}건 전체와 기업별 상세 정보, 필터를 쓸 수 있어요.`,
+  lockNote:"🔒 필터는 회원 전용이에요",
+  readLocked:"가입하고 원문 보기 ↗",
+  moreHead:n=>n>0?`회원에게는 뉴스 ${n}건이 더 있어요`:"회원 전용 정보가 더 있어요",
+  moreBody:"회원은 최근 30일 뉴스 전체와 기사 원문 링크, 기업·연구기관별 상세 정보, 필터를 이용할 수 있어요.",
+  moreBodyKr:n=>`한국을 확대하면 드론정보포털에 등록된 국내 드론기업 ${n}곳도 하나하나 볼 수 있어요.`,
+  coLocked:"무료로 가입하면 이 기관의 분야, 주요 제품, 설립 연도, 웹사이트를 볼 수 있어요.",
+  regLocked:"무료로 가입하면 이 권역에 있는 드론정보포털 등록 기업을 하나하나 확대해서 볼 수 있어요.",
+  previewSoon:"미리보기를 아직 준비 중이에요. 무료로 가입하면 지도를 볼 수 있어요."
 });
